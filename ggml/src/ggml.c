@@ -467,7 +467,7 @@ inline static void * ggml_calloc(size_t num, size_t size) {
 #define SWAP(x, y, T) do { T SWAP = x; (x) = y; (y) = SWAP; } while (0)
 
 #if defined(GGML_USE_ACCELERATE)
-#include <Accelerate/Accelerate.h>
+#include <vecLib/vDSP.h>
 #endif
 
 // floating point type used to accumulate sums

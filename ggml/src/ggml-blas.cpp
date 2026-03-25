@@ -7,7 +7,7 @@
 #include <cstring>
 
 #if defined(GGML_USE_ACCELERATE)
-#   include <Accelerate/Accelerate.h>
+#   include <vecLib/cblas.h>
 #elif defined(GGML_BLAS_USE_MKL)
 #   include <mkl.h>
 #elif defined(GGML_BLAS_USE_BLIS)

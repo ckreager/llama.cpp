@@ -185,6 +185,16 @@ if (GGML_BLAS)
     if (BLAS_FOUND)
         message(STATUS "BLAS found, Libraries: ${BLAS_LIBRARIES}")
 
+        if (APPLE AND (${GGML_BLAS_VENDOR} MATCHES "Apple") AND ("${BLAS_INCLUDE_DIRS}" STREQUAL ""))
+            find_path(BLAS_INCLUDE_DIRS
+                NAMES cblas.h
+                PATHS
+                    /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/Headers
+                    /Library/Developer/CommandLineTools/SDKs/MacOSX26.2.sdk/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/Headers
+                    /Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/Headers
+            )
+        endif()
+
         if (("${BLAS_INCLUDE_DIRS}" STREQUAL "") AND NOT (${GGML_BLAS_VENDOR} MATCHES "Apple"))
             # BLAS_INCLUDE_DIRS is missing in FindBLAS.cmake.
             # see https://gitlab.kitware.com/cmake/cmake/-/issues/20268
