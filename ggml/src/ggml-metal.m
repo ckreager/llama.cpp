@@ -55,12 +55,23 @@ static id<MTLDevice> ggml_backend_metal_device_acq(struct ggml_backend_metal_dev
     if (ctx->mtl_device == nil) {
         ctx->mtl_device = MTLCreateSystemDefaultDevice();
 
+        if (ctx->mtl_device == nil) {
+            snprintf(ctx->name, sizeof(ctx->name), "%s", "Metal unavailable");
+            return nil;
+        }
+
         ctx->support_simdgroup_reduction  = [ctx->mtl_device supportsFamily:MTLGPUFamilyApple7];
         ctx->support_simdgroup_reduction |= [ctx->mtl_device supportsFamily:MTLGPUFamilyMetal3_GGML];
 
         ctx->support_simdgroup_mm = [ctx->mtl_device supportsFamily:MTLGPUFamilyApple7];
 
-        strncpy(ctx->name, [[ctx->mtl_device name] UTF8String], sizeof(ctx->name) - 1);
+        const char * device_name = [[ctx->mtl_device name] UTF8String];
+        if (device_name != NULL) {
+            strncpy(ctx->name, device_name, sizeof(ctx->name) - 1);
+        } else {
+            snprintf(ctx->name, sizeof(ctx->name), "%s", "Unknown Metal device");
+        }
+        ctx->name[sizeof(ctx->name) - 1] = '\0';
     }
 
     ctx->mtl_device_ref_count++;
@@ -3606,6 +3617,12 @@ static void ggml_backend_metal_device_get_memory(ggml_backend_dev_t dev, size_t 
     if (@available(macOS 10.12, iOS 16.0, *)) {
         struct ggml_backend_metal_device_context * ctx_dev = (struct ggml_backend_metal_device_context *)dev->context;
         id<MTLDevice> device = ggml_backend_metal_device_acq(ctx_dev);
+
+        if (device == nil) {
+            *free = 0;
+            *total = 0;
+            return;
+        }
 
         *total = device.recommendedMaxWorkingSetSize;
         *free  = *total - device.currentAllocatedSize;

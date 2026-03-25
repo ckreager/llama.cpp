@@ -467,7 +467,7 @@ inline static void * ggml_calloc(size_t num, size_t size) {
 #define SWAP(x, y, T) do { T SWAP = x; (x) = y; (y) = SWAP; } while (0)
 
 #if defined(GGML_USE_ACCELERATE)
-#include <Accelerate/Accelerate.h>
+#include <vecLib/vDSP.h>
 #endif
 
 // floating point type used to accumulate sums
@@ -536,6 +536,12 @@ void ggml_fp16_to_fp32_row(const ggml_fp16_t * x, float * y, int64_t n) {
     for (int64_t i = 0; i < n; i++) {
         y[i] = GGML_FP16_TO_FP32(x[i]);
     }
+}
+
+static void dequantize_row_i2_s_wrapper(const void * vx, float * y, int64_t n) {
+    const uint8_t * x = (const uint8_t *) vx;
+    const float i2_scale = ((const float *)(x + (n / 4)))[0];
+    dequantize_row_i2_s(x, y, n, i2_scale);
 }
 
 void ggml_fp32_to_fp16_row(const float * x, ggml_fp16_t * y, int64_t n) {
@@ -1174,7 +1180,7 @@ static const struct ggml_type_traits type_traits[GGML_TYPE_COUNT] = {
         .blck_size                = 1,
         .type_size                = sizeof(int8_t),
         .is_quantized             = true,
-        .to_float                 = (ggml_to_float_t) dequantize_row_i2_s,
+        .to_float                 = dequantize_row_i2_s_wrapper,
         .vec_dot                  = (ggml_vec_dot_t) ggml_vec_dot_i2_i8_s,
         .gemv                     = (ggml_gemv_t) ggml_gemv_i2_i8_s,
         .gemm                     = (ggml_gemm_t) ggml_gemm_i2_i8_s,
